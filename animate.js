@@ -99,6 +99,33 @@
 			})
 		},
 
+		_delay: function(time) {
+			var _this = this;
+			this.state = 'running';
+
+			setTimeout(function() {
+				_this.state = 'start';
+				_this._resolveUnfinishedAction();
+			}, time * 1000)
+		},
+
+		/**
+		 * 延迟执行
+		 * @param  {[type]} time [description]
+		 * @return {[type]}      [description]
+		 */
+		delay: function(time) {
+			if(this.state === 'start') {
+				this._delay(time);
+			} else {
+				this._wait({
+					action: 'delay',
+					params: [time]
+				})
+			}
+			return this;
+		},
+
 		/**
 		 * 动画结束后清除添加的 class
 		 * @param  {[type]} el    [description]
@@ -125,21 +152,38 @@
 		},
 
 		_resolveUnfinishedAction: function() {
-			var types = this.waitedAction.shift();
-			typeof types !== 'undefined' && this.anim(types);
+			var obj = this.waitedAction.shift();
+			obj && this['_' + obj.action].apply(this, obj.params);
 		},
 
-		_wait: function(types) {
-			this.waitedAction.push(types);
+		/**
+		 * 将暂时不能执行的动作存储到队列中
+		 * @param  {[type]} obj [description]
+		 * @return {[type]}       [description]
+		 */
+		_wait: function(obj) {
+			this.waitedAction.push(obj);
 		},
 
 		anim: function(types) {
+			var arr;
+
 			if(this.state === 'start') {
 				this.state = 'running';
-				this._add(types);
+				if(isArray(types)) {
+					this._add(types.shift());
+				} else {
+					this._add(types);
+					return this;
+				}
 			} else {
-				this._wait(types);
+				types = [types];
 			}
+
+			this._wait({
+				action: 'add',
+				params: types
+			});
 
 			return this;
 		}
