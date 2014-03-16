@@ -17,12 +17,22 @@
 
 		isArray = Array.isArray,
 
-		ANIMATED = 'animated';
+		ANIMATED 	  = 'animated',
+		/**
+		 * 动画对象的状态
+		 * 	begin 表示可以接受动画
+		 * 	running 表示正在进行动画，新动画需要等待旧动画结束后才能执行
+		 */
+		STATE_BEGIN   = 'begin',
+		STATE_RUNNING = 'running';
 
+	/**
+	 * 检测浏览器前缀
+	 */
 	vendor = function() {
 		var dummyStyle = document.createElement('div').style,
 			item,
-			i = 0,
+			i   = 0,
 			len = vendors.length;
 
 		for(; i < len; i++) {
@@ -39,16 +49,14 @@
 
 	function Animate(els) {
 		this.els = els;
-		this.state = 'start';
+		this.state = STATE_BEGIN;
 		/**
 		 * 元素个数
-		 * @type {Number}
 		 */
 		this.length = els.length;
 
 		/**
 		 * 计数，用于判断全部元素的动画运行结束
-		 * @type {Number}
 		 */
 		this.count = 0;
 
@@ -65,8 +73,6 @@
 
 		/**
 		 * 便于循环的工具方法
-		 * @param  {Function} fn [description]
-		 * @return {[type]}      [description]
 		 */
 		_each: function(fn) {
 			var els = this.els,
@@ -82,7 +88,6 @@
 
 		/**
 		 * 为元素添加动画 class
-		 * @param {[type]} type [description]
 		 */
 		_add: function(type) {
 			var _this = this;
@@ -101,21 +106,20 @@
 
 		_delay: function(time) {
 			var _this = this;
-			this.state = 'running';
+			this.state = STATE_RUNNING;
 
 			setTimeout(function() {
-				_this.state = 'start';
+				_this.state = STATE_BEGIN;
 				_this._resolveUnfinishedAction();
 			}, time * 1000)
 		},
 
 		/**
 		 * 延迟执行
-		 * @param  {[type]} time [description]
-		 * @return {[type]}      [description]
+		 * time 单位为秒
 		 */
 		delay: function(time) {
-			if(this.state === 'start') {
+			if(this.state === STATE_BEGIN) {
 				this._delay(time);
 			} else {
 				this._wait({
@@ -128,9 +132,6 @@
 
 		/**
 		 * 动画结束后清除添加的 class
-		 * @param  {[type]} el    [description]
-		 * @param  {[type]} types [description]
-		 * @return {[type]}       [description]
 		 */
 		_finished: function(el, types) {
 			var classList = el.classList,
@@ -144,7 +145,7 @@
 			this.count--;
 
 			if(this.count === 0) {
-				this.state = 'start';
+				this.state = STATE_BEGIN;
 				setTimeout(function() {
 					_this._resolveUnfinishedAction();
 				}, 0)
@@ -158,18 +159,25 @@
 
 		/**
 		 * 将暂时不能执行的动作存储到队列中
-		 * @param  {[type]} obj [description]
-		 * @return {[type]}       [description]
+		 * obj 格式：
+		 * 		action：执行的动作名
+		 * 		params：执行动作所需的参数
 		 */
 		_wait: function(obj) {
 			this.waitedAction.push(obj);
 		},
 
+		/**
+		 * 执行动画的对外接口
+		 * types 值：
+		 * 		字符串，表示一个动画名称
+		 * 		数组，  表示一组动画名称
+		 */
 		anim: function(types) {
 			var arr;
 
-			if(this.state === 'start') {
-				this.state = 'running';
+			if(this.state === STATE_BEGIN) {
+				this.state = STATE_RUNNING;
 				if(isArray(types)) {
 					this._add(types.shift());
 				} else {
