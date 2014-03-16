@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>CSS Animation</title>
+	<style type="text/css">
+		* {
+			padding: 0;
+			margin: 0;
+		}
+
+		body {
+			font-family: "MicrosoftYaHei", sans-serif;
+		}
+
+		.wrap {
+			width: 80%;
+			margin: 10% auto;
+			text-align: center;
+		}
+
+		h1 {
+			display: inline-block;
+			font-size: 5em;
+			text-transform: lowercase;
+		}
+
+		h1:nth-child(1) {
+			color: #09c;
+		}
+
+		h1:nth-child(2) {
+			color: #f60;
+		}
+
+		h1:nth-child(3) {
+			color: #7c3;
+		}
+
+		h1:nth-child(4) {
+			color: #c00;
+		}
+
+		h1:nth-child(5) {
+			color: #639;
+		}
+
+		h1:nth-child(6) {
+			color: #360;
+		}
+
+		h1:nth-child(7) {
+			color: #fc3;
+		}
+	</style>
+	<link rel="stylesheet" type="text/css" href="animate.css">
+</head>
+<body>
+	<article>
+		<div class="wrap">
+			<h1>A</h1>
+			<h1>N</h1>
+			<h1>I</h1>
+			<h1>M</h1>
+			<h1>A</h1>
+			<h1>T</h1>
+			<h1>E</h1>
+		</div>
+	</article>
+
+	<script src="animate.js"></script>
+	<script>
+		animate('h1').anim('tada');
+	</script>
+</body>
+</html>
