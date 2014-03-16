@@ -40,21 +40,21 @@
 	function Animate(els) {
 		this.els = els;
 		this.state = 'start';
-
-		this.each(function() {
-			var classList = this.classList;
+		this._each(function(el) {
+			var classList = el.classList;
 			classList.contains(ANIMATED) || classList.add(ANIMATED);
 		})
-	}
-
-	function _finished() {
-		console.log("hola datevid");
 	}
 
 	Animate.prototype = {
 		constructor: Animate,
 
-		each: function(fn) {
+		/**
+		 * 便于循环的工具方法
+		 * @param  {Function} fn [description]
+		 * @return {[type]}      [description]
+		 */
+		_each: function(fn) {
 			var els = this.els,
 				el,
 				len = els.length,
@@ -62,20 +62,46 @@
 
 			for(; i < len; i++) {
 				el = els[i];
-				el.addEventListener(animationEndEvent, _finished);
-				fn.call(el);
+				fn.call(this, el);
 			}
 		},
 
-		add: function(type) {
-			this.each(function() {
-				var classList = this.classList;
+		/**
+		 * 为元素添加动画 class
+		 * @param {[type]} type [description]
+		 */
+		_add: function(type) {
+			var _this = this;
+
+			var types = [].concat(type);
+
+			this._each(function(el) {
+				var classList = el.classList;
 				classList.contains(type) || classList.add(type);
+				el.addEventListener(animationEndEvent, (el._handler = function() {
+					_this._finished(el, types);
+				}));
 			})
 		},
 
+		/**
+		 * 动画结束后清除添加的 class
+		 * @param  {[type]} el    [description]
+		 * @param  {[type]} types [description]
+		 * @return {[type]}       [description]
+		 */
+		_finished: function(el, types) {
+			var classList = el.classList;
+
+			el.removeEventListener(animationEndEvent, el._handler);
+			types.forEach(function(type) {
+				classList.contains(type) && classList.remove(type);
+			})
+			console.log("hola datevid");
+		},
+
 		anim: function(type) {
-			this.add(type);
+			this._add(type);
 		}
 	};
 
