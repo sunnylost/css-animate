@@ -40,6 +40,20 @@
 	function Animate(els) {
 		this.els = els;
 		this.state = 'start';
+		/**
+		 * 元素个数
+		 * @type {Number}
+		 */
+		this.length = els.length;
+
+		/**
+		 * 计数，用于判断全部元素的动画运行结束
+		 * @type {Number}
+		 */
+		this.count = 0;
+
+		this.waitedAction = [];
+
 		this._each(function(el) {
 			var classList = el.classList;
 			classList.contains(ANIMATED) || classList.add(ANIMATED);
@@ -76,6 +90,7 @@
 			var types = [].concat(type);
 
 			this._each(function(el) {
+				_this.count++;
 				var classList = el.classList;
 				classList.contains(type) || classList.add(type);
 				el.addEventListener(animationEndEvent, (el._handler = function() {
@@ -91,17 +106,42 @@
 		 * @return {[type]}       [description]
 		 */
 		_finished: function(el, types) {
-			var classList = el.classList;
+			var classList = el.classList,
+				_this = this;
 
 			el.removeEventListener(animationEndEvent, el._handler);
 			types.forEach(function(type) {
 				classList.contains(type) && classList.remove(type);
 			})
-			console.log("hola datevid");
+
+			this.count--;
+
+			if(this.count === 0) {
+				this.state = 'start';
+				setTimeout(function() {
+					_this._resolveUnfinishedAction();
+				}, 0)
+			}
 		},
 
-		anim: function(type) {
-			this._add(type);
+		_resolveUnfinishedAction: function() {
+			var types = this.waitedAction.shift();
+			typeof types !== 'undefined' && this.anim(types);
+		},
+
+		_wait: function(types) {
+			this.waitedAction.push(types);
+		},
+
+		anim: function(types) {
+			if(this.state === 'start') {
+				this.state = 'running';
+				this._add(types);
+			} else {
+				this._wait(types);
+			}
+
+			return this;
 		}
 	};
 
