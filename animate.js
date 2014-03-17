@@ -109,8 +109,7 @@
 			this.state = STATE_RUNNING;
 
 			setTimeout(function() {
-				_this.state = STATE_BEGIN;
-				_this._resolveUnfinishedAction();
+				_this.resume();
 			}, time * 1000)
 		},
 
@@ -145,9 +144,8 @@
 			this.count--;
 
 			if(this.count === 0) {
-				this.state = STATE_BEGIN;
 				setTimeout(function() {
-					_this._resolveUnfinishedAction();
+					_this.resume();
 				}, 0)
 			}
 		},
@@ -155,6 +153,10 @@
 		_resolveUnfinishedAction: function() {
 			var obj = this.waitedAction.shift();
 			obj && this['_' + obj.action].apply(this, obj.params);
+		},
+
+		_run: function(fn) {
+			fn.call(this);
 		},
 
 		/**
@@ -193,6 +195,44 @@
 				params: types
 			});
 
+			return this;
+		},
+
+		/**
+		 *
+		 * @param  {Function} fn 待执行函数
+		 */
+		then: function(fn) {
+			if(typeof fn === 'function') {
+				if(this.state === STATE_BEGIN) {
+					this.state = STATE_RUNNING;
+					fn.call(this);
+				} else {
+					this._wait({
+						action: 'run',
+						params: [fn]
+					})
+				}
+			}
+			return this;
+		},
+
+		/**
+		 * 暂停动画队列执行
+		 * @return {[type]} [description]
+		 */
+		pause: function() {
+			this.state = STATE_RUNNING;
+			return this;
+		},
+
+		/**
+		 * 恢复动画队列
+		 * @return {[type]} [description]
+		 */
+		resume: function() {
+			this.state = STATE_BEGIN;
+			this._resolveUnfinishedAction();
 			return this;
 		}
 	};

@@ -71,6 +71,15 @@
 	<script src="animate.js"></script>
 	<script>
 		animate('h1').anim('tada')
+					 .then(function() {
+					 	var _this = this;
+					 	this.pause();
+					 	console.log("Tada is over! The animation has to be paused!");
+					 	setTimeout(function() {
+					 		console.log("After 2 seconds, the animation is start again!");
+					 		_this.resume();
+					 	}, 2000)
+					 })
 					 .anim('bounce')
 					 .delay(2)
 					 .anim('hinge')
