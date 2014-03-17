@@ -83,7 +83,13 @@
 					 .anim('bounce')
 					 .delay(2)
 					 .anim('hinge')
-					 .anim('flash');
+					 .anim('flash')
+					 .then(function() {
+					 	animate('h1:nth-child(2)')
+							.anim('flipOutX')
+							.delay(1)
+							.anim('fadeOutRight');
+					 });
 	</script>
 </body>
 </html>
