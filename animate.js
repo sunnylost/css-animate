@@ -47,8 +47,10 @@
 		return false;
 	}();
 
+	vendors = [ '', 'webkit', 'Moz', 'O', 'ms' ];
+
 	animationEndEvent = animationEndEvents[vendor];
-	animationDuration = (vendor == 'webkit' ? '-webkit-' : '') + 'animation-duration';
+	animationDuration = vendor + 'AnimationDuration';
 
 	/**
 	 * 便于循环的工具方法
@@ -101,7 +103,8 @@
 				_this.count++;
 				var classList = el.classList,
 					t = type,
-					d = null;
+					d = null,
+					style = el.style;
 
 				if(typeof type !== 'string') {
 					t = type.type;
@@ -114,7 +117,15 @@
 
 				classList.contains(t) || classList.add(t);
 
-				d !== null && (el.style.cssText += animationDuration + ':' + d + 's')
+				if(d !== null) {
+					/**
+					 * 出于兼容性考虑，使用如下方式设置 duration
+					 * 比如说 Firefox 31，虽然 vendor 值为 ''，但设置 duration 仍需要 'Moz' 前缀
+					 */
+					vendors.forEach(function(v) {
+						style[(v == '' ? 'a' : v + 'A') + 'nimationDuration'] = d + 's';
+					})
+				}
 
 				el.addEventListener(animationEndEvent, (el._handler = function() {
 					_this._finished(el, types);
@@ -139,7 +150,6 @@
 		 */
 		_finished: function(el, types) {
 			var classList = el.classList,
-				cssText   = el.style.cssText,
 				_this     = this;
 
 			el.removeEventListener(animationEndEvent, el._handler);
@@ -147,7 +157,8 @@
 
 			types.forEach(function(type) {
 				var t = type,
-					d = null;
+					d = null,
+					style = el.style;
 
 				if(typeof type !== 'string') {
 					t = type.type;
@@ -155,13 +166,9 @@
 				}
 				classList.contains(t) && classList.remove(t);
 
-				/**
-				 * 向 cssText 中赋值 -webkit-animation-duration:2s 在不同浏览器下的解析不同，
-				 * 因此统一设置为空
-				 *
-				 * 原来尝试过使用字符串替换，失败~
-				 */
-				d !== null && (el.style[animationDuration] = '');
+				vendors.forEach(function(v) {
+					style[(v == '' ? 'a' : v + 'A') + 'nimationDuration'] = '';
+				})
 			})
 
 			this.count--;
