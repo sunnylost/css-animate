@@ -70,7 +70,10 @@
 
 	<script src="animate.js"></script>
 	<script>
-		animate('h1').anim('tada')
+		animate('h1').anim([{
+								type: 'tada',
+								duration: 2
+							}, 'fadeInDownBig'])
 					 .then(function() {
 					 	var _this = this;
 					 	this.pause();
@@ -80,7 +83,10 @@
 					 		_this.resume();
 					 	}, 2000)
 					 })
-					 .anim('bounce')
+					 .anim({
+					 	type: 'bounce',
+					 	duration: 3
+					 })
 					 .delay(2)
 					 .anim('hinge')
 					 .anim('flash')

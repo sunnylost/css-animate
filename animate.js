@@ -5,6 +5,8 @@
 	 */
 	var vendor,
 		vendors = [ 't', 'webkitT', 'MozT', 'OT', 'msT' ],
+
+		animationDuration,
 		transitionEndEvent,
 		animationEndEvent,
 		animationEndEvents = {
@@ -46,6 +48,22 @@
 	}();
 
 	animationEndEvent = animationEndEvents[vendor];
+	animationDuration = (vendor == 'webkit' ? '-webkit-' : '') + 'animation-duration';
+
+	/**
+	 * 便于循环的工具方法
+	 */
+	function each(fn) {
+		var els = this.els,
+			el,
+			len = els.length,
+			i = 0;
+
+		for(; i < len; i++) {
+			el = els[i];
+			fn.call(this, el);
+		}
+	}
 
 	function Animate(els) {
 		this.els = els;
@@ -62,7 +80,7 @@
 
 		this.waitedAction = [];
 
-		this._each(function(el) {
+		each.call(this, function(el) {
 			var classList = el.classList;
 			classList.contains(ANIMATED) || classList.add(ANIMATED);
 		})
@@ -72,21 +90,6 @@
 		constructor: Animate,
 
 		/**
-		 * 便于循环的工具方法
-		 */
-		_each: function(fn) {
-			var els = this.els,
-				el,
-				len = els.length,
-				i = 0;
-
-			for(; i < len; i++) {
-				el = els[i];
-				fn.call(this, el);
-			}
-		},
-
-		/**
 		 * 为元素添加动画 class
 		 */
 		_add: function(type) {
@@ -94,16 +97,34 @@
 
 			var types = [].concat(type);
 
-			this._each(function(el) {
+			each.call(this, function(el) {
 				_this.count++;
-				var classList = el.classList;
-				classList.contains(type) || classList.add(type);
+				var classList = el.classList,
+					t = type,
+					d = null;
+
+				if(typeof type !== 'string') {
+					t = type.type;
+					d = +type.duration;
+
+					if(typeof d !== 'number' || d !== d) {
+						throw Error('Duration must be an integer.');
+					}
+				}
+
+				classList.contains(t) || classList.add(t);
+
+				d !== null && (el.style.cssText += animationDuration + ':' + d + 's')
+
 				el.addEventListener(animationEndEvent, (el._handler = function() {
 					_this._finished(el, types);
 				}));
 			})
 		},
 
+		/**
+		 * 延迟动画队列执行
+		 */
 		_delay: function(time) {
 			var _this = this;
 			this.state = STATE_RUNNING;
@@ -114,31 +135,33 @@
 		},
 
 		/**
-		 * 延迟执行
-		 * time 单位为秒
-		 */
-		delay: function(time) {
-			if(this.state === STATE_BEGIN) {
-				this._delay(time);
-			} else {
-				this._wait({
-					action: 'delay',
-					params: [time]
-				})
-			}
-			return this;
-		},
-
-		/**
 		 * 动画结束后清除添加的 class
 		 */
 		_finished: function(el, types) {
 			var classList = el.classList,
-				_this = this;
+				cssText   = el.style.cssText,
+				_this     = this;
 
 			el.removeEventListener(animationEndEvent, el._handler);
+			delete el._handler;
+
 			types.forEach(function(type) {
-				classList.contains(type) && classList.remove(type);
+				var t = type,
+					d = null;
+
+				if(typeof type !== 'string') {
+					t = type.type;
+					d = type.duration;
+				}
+				classList.contains(t) && classList.remove(t);
+
+				/**
+				 * 向 cssText 中赋值 -webkit-animation-duration:2s 在不同浏览器下的解析不同，
+				 * 因此统一设置为空
+				 *
+				 * 原来尝试过使用字符串替换，失败~
+				 */
+				d !== null && (el.style[animationDuration] = '');
 			})
 
 			this.count--;
@@ -190,7 +213,7 @@
 				types = [types];
 			}
 
-			this._wait({
+			types.length > 0 && this._wait({
 				action: 'add',
 				params: types
 			});
@@ -199,20 +222,17 @@
 		},
 
 		/**
-		 *
-		 * @param  {Function} fn 待执行函数
+		 * 延迟执行
+		 * time 单位为秒
 		 */
-		then: function(fn) {
-			if(typeof fn === 'function') {
-				if(this.state === STATE_BEGIN) {
-					this.state = STATE_RUNNING;
-					fn.call(this);
-				} else {
-					this._wait({
-						action: 'run',
-						params: [fn]
-					})
-				}
+		delay: function(time) {
+			if(this.state === STATE_BEGIN) {
+				this._delay(time);
+			} else {
+				this._wait({
+					action: 'delay',
+					params: [time]
+				})
 			}
 			return this;
 		},
@@ -233,6 +253,25 @@
 		resume: function() {
 			this.state = STATE_BEGIN;
 			this._resolveUnfinishedAction();
+			return this;
+		},
+
+		/**
+		 *
+		 * @param  {Function} fn 待执行函数
+		 */
+		then: function(fn) {
+			if(typeof fn === 'function') {
+				if(this.state === STATE_BEGIN) {
+					this.state = STATE_RUNNING;
+					fn.call(this);
+				} else {
+					this._wait({
+						action: 'run',
+						params: [fn]
+					})
+				}
+			}
 			return this;
 		}
 	};
