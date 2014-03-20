@@ -6,7 +6,6 @@
 	var vendor,
 		vendors = [ 't', 'webkitT', 'MozT', 'OT', 'msT' ],
 
-		animationDuration,
 		transitionEndEvent,
 		animationEndEvent,
 		animationEndEvents = {
@@ -47,10 +46,12 @@
 		return false;
 	}();
 
+	/**
+	 * 为了下面循环方便而重新赋值
+	 */
 	vendors = [ '', 'webkit', 'Moz', 'O', 'ms' ];
 
 	animationEndEvent = animationEndEvents[vendor];
-	animationDuration = vendor + 'AnimationDuration';
 
 	/**
 	 * 便于循环的工具方法
