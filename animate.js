@@ -100,6 +100,7 @@
 		 */
 		_add: function(animation) {
 			var _this = this;
+			_this.state = STATE_RUNNING;
 
 			var a = animation,
 				d = null;
@@ -117,7 +118,10 @@
 							duration: d
 						});
 					})
-					this.anim(anims);
+					_this.waitedAction.unshift({
+						action: 'add',
+						params: anims
+					});
 					animation.animation = a = a[0];
 				}
 
@@ -129,7 +133,7 @@
 				}
 			}
 
-			each.call(this, function(el) {
+			each.call(_this, function(el) {
 				_this.count++;
 				var classList = el.classList,
 					style = el.style;
@@ -156,7 +160,7 @@
 		 * 延迟动画队列执行
 		 */
 		_delay: function(time) {
-			var _this = this;
+			var _this  = this;
 			this.state = STATE_RUNNING;
 
 			setTimeout(function() {
@@ -169,20 +173,17 @@
 		 */
 		_finished: function(el, animation) {
 			var classList = el.classList,
-				_this     = this;
+				_this     = this,
+				style = el.style;
 
 			el.removeEventListener(animationEndEvent, el._handler);
 			el._handler = null;
 
-			var t = animation,
-				d = null,
-				style = el.style;
-
 			if(typeof animation !== 'string') {
-				t = animation.animation;
-				d = animation.duration;
+				animation = animation.animation;
 			}
-			classList.contains(t) && classList.remove(t);
+
+			classList.contains(animation) && classList.remove(animation);
 
 			vendors.forEach(function(v) {
 				style[(v == '' ? 'a' : v + 'A') + 'nimationDuration'] = '';
@@ -227,7 +228,6 @@
 			var arr;
 
 			if(this.state === STATE_BEGIN) {
-				this.state = STATE_RUNNING;
 				if(isArray(animations)) {
 					this._add(animations.shift());
 				} else {
@@ -235,7 +235,7 @@
 					return this;
 				}
 			} else {
-				animations = [animations];
+				animations = [].concat(animations);
 			}
 
 			animations.length > 0 && this._wait({
