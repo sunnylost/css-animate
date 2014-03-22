@@ -1,3 +1,6 @@
+/**
+ * @version: 0.1
+ */
 (function() {
 	/**
 	 * 参考以下代码
@@ -95,28 +98,43 @@
 		/**
 		 * 为元素添加动画 class
 		 */
-		_add: function(type) {
+		_add: function(animation) {
 			var _this = this;
 
-			var types = [].concat(type);
+			var a = animation,
+				d = null;
+
+			if(typeof animation !== 'string') {
+				a = animation.animation;
+				d = animation.duration;
+
+				if(isArray(a)) {
+					var anims = [];
+					a.forEach(function(anim, i) {
+						if(i == 0) return;
+						anims.push({
+							animation: anim,
+							duration: d
+						});
+					})
+					this.anim(anims);
+					animation.animation = a = a[0];
+				}
+
+				if(typeof d !== 'undefined') {
+					d = +d;
+					if(d !== d) {
+						throw Error('Duration must be an integer.');
+					}
+				}
+			}
 
 			each.call(this, function(el) {
 				_this.count++;
 				var classList = el.classList,
-					t = type,
-					d = null,
 					style = el.style;
 
-				if(typeof type !== 'string') {
-					t = type.type;
-					d = +type.duration;
-
-					if(typeof d !== 'number' || d !== d) {
-						throw Error('Duration must be an integer.');
-					}
-				}
-
-				classList.contains(t) || classList.add(t);
+				classList.contains(a) || classList.add(a);
 
 				if(d !== null) {
 					/**
@@ -129,7 +147,7 @@
 				}
 
 				el.addEventListener(animationEndEvent, (el._handler = function() {
-					_this._finished(el, types);
+					_this._finished(el, animation);
 				}));
 			})
 		},
@@ -149,27 +167,25 @@
 		/**
 		 * 动画结束后清除添加的 class
 		 */
-		_finished: function(el, types) {
+		_finished: function(el, animation) {
 			var classList = el.classList,
 				_this     = this;
 
 			el.removeEventListener(animationEndEvent, el._handler);
-			delete el._handler;
+			el._handler = null;
 
-			types.forEach(function(type) {
-				var t = type,
-					d = null,
-					style = el.style;
+			var t = animation,
+				d = null,
+				style = el.style;
 
-				if(typeof type !== 'string') {
-					t = type.type;
-					d = type.duration;
-				}
-				classList.contains(t) && classList.remove(t);
+			if(typeof animation !== 'string') {
+				t = animation.animation;
+				d = animation.duration;
+			}
+			classList.contains(t) && classList.remove(t);
 
-				vendors.forEach(function(v) {
-					style[(v == '' ? 'a' : v + 'A') + 'nimationDuration'] = '';
-				})
+			vendors.forEach(function(v) {
+				style[(v == '' ? 'a' : v + 'A') + 'nimationDuration'] = '';
 			})
 
 			this.count--;
@@ -202,28 +218,29 @@
 
 		/**
 		 * 执行动画的对外接口
-		 * types 值：
+		 * animations 值：
 		 * 		字符串，表示一个动画名称
-		 * 		数组，  表示一组动画名称
+		 * 		数组，  表示一组动画对象或动画名称
+		 * 		对象，  animation 表示动画名，duration 表示持续时间
 		 */
-		anim: function(types) {
+		anim: function(animations) {
 			var arr;
 
 			if(this.state === STATE_BEGIN) {
 				this.state = STATE_RUNNING;
-				if(isArray(types)) {
-					this._add(types.shift());
+				if(isArray(animations)) {
+					this._add(animations.shift());
 				} else {
-					this._add(types);
+					this._add(animations);
 					return this;
 				}
 			} else {
-				types = [types];
+				animations = [animations];
 			}
 
-			types.length > 0 && this._wait({
+			animations.length > 0 && this._wait({
 				action: 'add',
-				params: types
+				params: animations
 			});
 
 			return this;
